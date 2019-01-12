@@ -169,40 +169,53 @@ def model_fn(features, labels, mode, params):
     # Unused
     del labels
     training = mode == tf.estimator.ModeKeys.TRAIN
-    num_voxels = args.batch_size * args.resolution ** 3
+    num_voxels = tf.constant(args.batch_size * (args.resolution ** 3), dtype=tf.float32)
 
     # Get training patch from dataset.
     x = features
+    num_occupied_voxels = tf.reduce_sum(x)
 
     # Build autoencoder.
     y = analysis_transform(x, args.num_filters)
-    entropy_bottleneck = tfc.EntropyBottleneck()
+    entropy_bottleneck = tfc.EntropyBottleneck(data_format=DATA_FORMAT)
     y_tilde, likelihoods = entropy_bottleneck(y, training=training)
     x_tilde = synthesis_transform(y_tilde, args.num_filters)
 
     # Total number of bits divided by number of pixels.
-    # Bpp per sample
-    train_bpp = tf.reduce_sum(tf.log(likelihoods)) / (-np.log(2) * num_voxels)
+    log_likelihoods = tf.log(likelihoods)
+    train_bpv = tf.reduce_sum(log_likelihoods) / (-np.log(2) * num_voxels)
+    train_mbpov = tf.reduce_sum(log_likelihoods) / (-np.log(2) * num_occupied_voxels)
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         predictions = {
             'x_tilde': x_tilde,
-            'train_bpp': train_bpp,
+            'train_bpv': train_bpv,
             'y_tilde': y_tilde
         }
         return tf.estimator.EstimatorSpec(mode, predictions=predictions)
 
     train_mse = tf.reduce_mean(tf.squared_difference(x, x_tilde))
     train_mae = tf.reduce_mean(tf.abs(x - x_tilde))
-    train_focal_loss = focal_loss(x, x_tilde)
+    train_sfl = focal_loss(x, x_tilde)
+    train_mfl = train_sfl / num_voxels
     # The rate-distortion cost.
-    train_loss = args.lmbda * train_focal_loss + train_bpp
+    train_loss = args.lmbda * train_mfl + train_mbpov
 
     tf.summary.scalar("loss", train_loss)
-    tf.summary.scalar("bpp", train_bpp)
+    tf.summary.scalar("bpv", train_bpv)
+    tf.summary.scalar("mbpov", train_mbpov)
     tf.summary.scalar("mse", train_mse)
-    tf.summary.scalar("focal_loss", train_focal_loss)
+    tf.summary.scalar("focal_loss", train_sfl)
+    tf.summary.scalar("mean_focal_loss", train_mfl)
     tf.summary.scalar("mae", train_mae)
+    tf.summary.scalar("num_occupied_voxels", num_occupied_voxels)
+    tf.summary.scalar("num_voxels", num_voxels)
+
+    tf.summary.histogram("y_tilde", y_tilde)
+    tf.summary.histogram("x", x)
+    tf.summary.histogram("x_tilde", x_tilde)
+    tf.summary.histogram("likelihoods", likelihoods)
+    tf.summary.histogram("log_likelihoods", log_likelihoods)
 
     tf.summary.tensor_summary("original", quantize_tensor(x))
     tf.summary.tensor_summary("reconstruction", quantize_tensor(x_tilde))
@@ -216,7 +229,7 @@ def model_fn(features, labels, mode, params):
 
     # Minimize loss and auxiliary loss, and execute update op.
     assert mode == tf.estimator.ModeKeys.TRAIN
-    main_optimizer = tf.train.AdamOptimizer(learning_rate=1e-3)
+    main_optimizer = tf.train.AdamOptimizer(learning_rate=1e-4)
     main_step = main_optimizer.minimize(train_loss, global_step=tf.train.get_global_step())
 
     aux_optimizer = tf.train.AdamOptimizer(learning_rate=1e-3)
@@ -291,13 +304,13 @@ if __name__ == '__main__':
         '--verbose', '-v', action='store_true',
         help='Report bitrate and distortion when training.')
     parser.add_argument(
-        '--num_filters', type=int, default=16,
+        '--num_filters', type=int, default=32,
         help='Number of filters per layer.')
     parser.add_argument(
         '--batch_size', type=int, default=32,
         help='Batch size for training.')
     parser.add_argument(
-        '--lmbda', type=float, default=0.1,
+        '--lmbda', type=float, default=100.0,
         help='Lambda for rate-distortion tradeoff.')
     parser.add_argument(
         '--last_step', type=int, default=1000000,
