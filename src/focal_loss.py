@@ -1,7 +1,7 @@
 import tensorflow as tf
 import tensorflow.keras.backend as K
 
-def focal_loss(y_true, y_pred, gamma=2, alpha=0.9):
+def focal_loss(y_true, y_pred, gamma=2, alpha=0.95):
     pt_1 = tf.where(tf.equal(y_true, 1), y_pred, tf.ones_like(y_pred))
     pt_0 = tf.where(tf.equal(y_true, 0), y_pred, tf.zeros_like(y_pred))
 

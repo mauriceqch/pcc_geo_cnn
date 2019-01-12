@@ -196,17 +196,15 @@ def model_fn(features, labels, mode, params):
 
     train_mse = tf.reduce_mean(tf.squared_difference(x, x_tilde))
     train_mae = tf.reduce_mean(tf.abs(x - x_tilde))
-    train_sfl = focal_loss(x, x_tilde)
-    train_mfl = train_sfl / num_voxels
+    train_fl = focal_loss(x, x_tilde)
     # The rate-distortion cost.
-    train_loss = args.lmbda * train_mfl + train_mbpov
+    train_loss = args.lmbda * train_fl + train_mbpov
 
     tf.summary.scalar("loss", train_loss)
     tf.summary.scalar("bpv", train_bpv)
     tf.summary.scalar("mbpov", train_mbpov)
     tf.summary.scalar("mse", train_mse)
-    tf.summary.scalar("focal_loss", train_sfl)
-    tf.summary.scalar("mean_focal_loss", train_mfl)
+    tf.summary.scalar("focal_loss", train_fl)
     tf.summary.scalar("mae", train_mae)
     tf.summary.scalar("num_occupied_voxels", num_occupied_voxels)
     tf.summary.scalar("num_voxels", num_voxels)
@@ -310,7 +308,7 @@ if __name__ == '__main__':
         '--batch_size', type=int, default=32,
         help='Batch size for training.')
     parser.add_argument(
-        '--lmbda', type=float, default=100.0,
+        '--lmbda', type=float, default=0.0005,
         help='Lambda for rate-distortion tradeoff.')
     parser.add_argument(
         '--last_step', type=int, default=1000000,
