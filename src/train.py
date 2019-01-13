@@ -223,7 +223,11 @@ def model_fn(features, labels, mode, params):
     entropy_bottleneck.visualize()
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        return tf.estimator.EstimatorSpec(mode, loss=train_loss)
+        summary_hook = tf.train.SummarySaverHook(
+            save_steps=5,
+            output_dir=join(args.checkpoint_dir, 'eval'),
+            summary_op=tf.summary.merge_all())
+        return tf.estimator.EstimatorSpec(mode, loss=train_loss, evaluation_hooks=[summary_hook])
 
     # Minimize loss and auxiliary loss, and execute update op.
     assert mode == tf.estimator.ModeKeys.TRAIN
@@ -268,11 +272,18 @@ def train():
 
     assert(len(points_train) + len(points_val) + len(points_test) == len(points))
 
+    config = tf.estimator.RunConfig(
+        keep_checkpoint_every_n_hours=1,
+        save_checkpoints_secs=600,
+        keep_checkpoint_max=100,
+        tf_random_seed=42)
     estimator = tf.estimator.Estimator(
         model_fn=model_fn,
-        model_dir=args.checkpoint_dir)
+        model_dir=args.checkpoint_dir,
+        config=config)
     train_spec = tf.estimator.TrainSpec(
-        input_fn=lambda: input_fn(points_train, args.batch_size))
+        input_fn=lambda: input_fn(points_train, args.batch_size),
+        max_steps=args.max_steps)
     val_spec = tf.estimator.EvalSpec(
         input_fn=lambda: input_fn(points_val, args.batch_size, repeat=False),
         steps=None)
@@ -305,13 +316,13 @@ if __name__ == '__main__':
         '--num_filters', type=int, default=32,
         help='Number of filters per layer.')
     parser.add_argument(
-        '--batch_size', type=int, default=32,
+        '--batch_size', type=int, default=64,
         help='Batch size for training.')
     parser.add_argument(
-        '--lmbda', type=float, default=0.0005,
+        '--lmbda', type=float, default=0.0001,
         help='Lambda for rate-distortion tradeoff.')
     parser.add_argument(
-        '--last_step', type=int, default=1000000,
+        '--max_steps', type=int, default=1000000,
         help='Train up to this number of steps.')
     parser.add_argument(
         '--epochs', type=int, default=1000,
