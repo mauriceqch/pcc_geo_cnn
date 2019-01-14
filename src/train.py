@@ -222,6 +222,7 @@ def model_fn(features, labels, mode, params):
     tf.summary.scalar("recall_metric", recall_metric[1])
     tf.summary.scalar("accuracy_metric", accuracy_metric[1])
 
+    tf.summary.histogram("y", y)
     tf.summary.histogram("y_tilde", y_tilde)
     tf.summary.histogram("x", x)
     tf.summary.histogram("x_tilde", x_tilde)
@@ -294,10 +295,12 @@ def train():
 
     points = pcs_tf
     points_train = points[files_cat == 'train']
-    points_train, points_val = train_test_split(points_train, test_size=0.2)
     points_test = points[files_cat == 'test']
+    points_val = points_test
+    # points_train, points_val = train_test_split(points_train, test_size=0.2)
 
-    assert(len(points_train) + len(points_val) + len(points_test) == len(points))
+    # assert(len(points_train) + len(points_val) + len(points_test) == len(points))
+    assert(len(points_train) + len(points_val) == len(points))
 
     config = tf.estimator.RunConfig(
         keep_checkpoint_every_n_hours=1,
