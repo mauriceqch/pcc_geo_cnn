@@ -138,7 +138,7 @@ def model_fn(features, labels, mode, params):
     fn = tf.count_nonzero((x_tilde_quant - 1) * x_quant, dtype=tf.float32) / num_voxels
     precision = tp / (tp + fp)
     recall = tp / (tp + fn)
-    accuracy = (tp + fn) / (tp + tn + fp + fn)
+    accuracy = (tp + tn) / (tp + tn + fp + fn)
     specificity = tn / (tn + fp)
     f1_score = (2 * precision * recall) / (precision + recall)
 
