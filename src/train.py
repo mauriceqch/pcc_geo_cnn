@@ -15,6 +15,7 @@ import tensorflow as tf
 import argparse
 import compression_model
 import pc_io
+from tensorflow.python import debug as tf_debug
 
 np.random.seed(42)
 tf.set_random_seed(42)
@@ -57,12 +58,19 @@ def train():
             'checkpoint_dir': args.checkpoint_dir,
             'data_format': DATA_FORMAT
         })
+
+    hooks = None
+    if args.debug_address is not None:
+        hooks = [tf_debug.TensorBoardDebugHook(args.debug_address)]
+
     train_spec = tf.estimator.TrainSpec(
         input_fn=lambda: compression_model.input_fn(points_train, args.batch_size, dense_tensor_shape, args.preprocess_threads),
-        max_steps=args.max_steps)
+        max_steps=args.max_steps,
+        hooks=hooks)
     val_spec = tf.estimator.EvalSpec(
         input_fn=lambda: compression_model.input_fn(points_test, args.batch_size, dense_tensor_shape, args.preprocess_threads, repeat=False),
-        steps=None)
+        steps=None,
+        hooks=hooks)
 
     tf.estimator.train_and_evaluate(estimator, train_spec, val_spec)
 
@@ -112,6 +120,10 @@ if __name__ == '__main__':
     parser.add_argument(
         '--preprocess_threads', type=int, default=16,
         help='Number of CPU threads to use for parallel decoding.')
+    parser.add_argument(
+        '--debug_address', default=None,
+        help='TensorBoard debug address.')
+
 
     args = parser.parse_args()
 
