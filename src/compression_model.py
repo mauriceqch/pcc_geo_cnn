@@ -126,9 +126,15 @@ def model_fn(features, labels, mode, params):
     # Metrics
     train_mae = tf.reduce_mean(tf.abs(x - x_tilde))
     train_mse = tf.reduce_mean(tf.squared_difference(x, x_tilde))
-    precision_metric = tf.metrics.precision(x_quant, x_tilde)
-    recall_metric = tf.metrics.recall(x_quant, x_tilde)
-    accuracy_metric = tf.metrics.accuracy(x_quant, x_tilde)
+    tp = tf.count_nonzero(x_tilde_quant * x_quant, dtype=tf.float32) / num_voxels
+    tn = tf.count_nonzero((x_tilde_quant - 1) * (x_quant - 1), dtype=tf.float32) / num_voxels
+    fp = tf.count_nonzero(x_tilde_quant * (x_quant - 1), dtype=tf.float32) / num_voxels
+    fn = tf.count_nonzero((x_tilde_quant - 1) * x_quant, dtype=tf.float32) / num_voxels
+    precision = tp / (tp + fp)
+    recall = tp / (tp + fn)
+    accuracy = (tp + fn) / (tp + tn + fp + fn)
+    specificity = tn / (tn + fp)
+    f1_score = (2 * precision * recall) / (precision + recall)
 
     tf.summary.scalar("loss", train_loss)
     tf.summary.scalar("bpv", train_bpv)
@@ -138,9 +144,11 @@ def model_fn(features, labels, mode, params):
     tf.summary.scalar("mae", train_mae)
     tf.summary.scalar("num_occupied_voxels", num_occupied_voxels)
     tf.summary.scalar("num_voxels", num_voxels)
-    tf.summary.scalar("precision_metric", precision_metric[1])
-    tf.summary.scalar("recall_metric", recall_metric[1])
-    tf.summary.scalar("accuracy_metric", accuracy_metric[1])
+    tf.summary.scalar("precision_metric", precision)
+    tf.summary.scalar("recall_metric", recall)
+    tf.summary.scalar("accuracy_metric", accuracy)
+    tf.summary.scalar("specificity_metric", specificity)
+    tf.summary.scalar("f1_score_metric", f1_score)
 
     tf.summary.histogram("y", y)
     tf.summary.histogram("y_tilde", y_tilde)
@@ -155,6 +163,9 @@ def model_fn(features, labels, mode, params):
     entropy_bottleneck.visualize()
 
     if mode == tf.estimator.ModeKeys.EVAL:
+        precision_metric = tf.metrics.precision(x_quant, x_tilde)
+        recall_metric = tf.metrics.recall(x_quant, x_tilde)
+        accuracy_metric = tf.metrics.accuracy(x_quant, x_tilde)
         metrics = {
             'precision_metric': precision_metric,
             'recall_metric': recall_metric,
