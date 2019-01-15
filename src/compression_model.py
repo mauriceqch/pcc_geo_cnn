@@ -88,7 +88,7 @@ def model_fn(features, labels, mode, params):
     params = namedtuple('Struct', params.keys())(*params.values())
     # Unused
     del labels
-    training = mode == tf.estimator.ModeKeys.TRAIN
+    training = (mode == tf.estimator.ModeKeys.TRAIN)
 
     # Get training patch from dataset.
     x = features
@@ -111,11 +111,17 @@ def model_fn(features, labels, mode, params):
     train_mbpov = tf.reduce_sum(log_likelihoods) / (-np.log(2) * num_occupied_voxels)
 
     if mode == tf.estimator.ModeKeys.PREDICT:
+        string = entropy_bottleneck.compress(y)
+        string = tf.squeeze(string, axis=0)
+        x_shape = tf.shape(x)
+        y_shape = tf.shape(y)
         predictions = {
             'x_tilde': x_tilde,
-            'train_bpv': train_bpv,
             'y_tilde': y_tilde,
-            'x_tilde_quant': x_tilde_quant
+            'x_tilde_quant': x_tilde_quant,
+            'string': string,
+            'x_shape': x_shape,
+            'y_shape': y_shape
         }
         return tf.estimator.EstimatorSpec(mode, predictions=predictions)
 
@@ -187,7 +193,6 @@ def model_fn(features, labels, mode, params):
     aux_step = aux_optimizer.minimize(entropy_bottleneck.losses[0])
 
     train_op = tf.group(main_step, aux_step, entropy_bottleneck.updates[0])
-    train_op = main_step
 
     return tf.estimator.EstimatorSpec(mode, loss=train_loss, train_op=train_op)
 
