@@ -112,16 +112,22 @@ def model_fn(features, labels, mode, params):
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         string = entropy_bottleneck.compress(y)
-        string = tf.squeeze(string, axis=0)
+        # Remove batch dimension and repeat across batch dimensions
         x_shape = tf.shape(x)
         y_shape = tf.shape(y)
+        batch_size = x_shape[0]
+
+        def repeat(t, n):
+            return tf.reshape(tf.tile(t, [n]), tf.concat([[n], tf.shape(t)], 0))
+        x_shape_rep = repeat(x_shape[1:], batch_size)
+        y_shape_rep = repeat(y_shape[1:], batch_size)
         predictions = {
             'x_tilde': x_tilde,
             'y_tilde': y_tilde,
             'x_tilde_quant': x_tilde_quant,
             'string': string,
-            'x_shape': x_shape,
-            'y_shape': y_shape
+            'x_shape': x_shape_rep,
+            'y_shape': y_shape_rep
         }
         return tf.estimator.EstimatorSpec(mode, predictions=predictions)
 
@@ -169,20 +175,11 @@ def model_fn(features, labels, mode, params):
     entropy_bottleneck.visualize()
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        precision_metric = tf.metrics.precision(x_quant, x_tilde)
-        recall_metric = tf.metrics.recall(x_quant, x_tilde)
-        accuracy_metric = tf.metrics.accuracy(x_quant, x_tilde)
-        metrics = {
-            'precision_metric': precision_metric,
-            'recall_metric': recall_metric,
-            'accuracy_metric': accuracy_metric,
-        }
-
         summary_hook = tf.train.SummarySaverHook(
             save_steps=5,
             output_dir=os.path.join(params.checkpoint_dir, 'eval'),
             summary_op=tf.summary.merge_all())
-        return tf.estimator.EstimatorSpec(mode, loss=train_loss, evaluation_hooks=[summary_hook], eval_metric_ops=metrics)
+        return tf.estimator.EstimatorSpec(mode, loss=train_loss, evaluation_hooks=[summary_hook])
 
     # Minimize loss and auxiliary loss, and execute update op.
     assert mode == tf.estimator.ModeKeys.TRAIN

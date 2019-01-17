@@ -73,12 +73,12 @@ def get_shape_data(resolution):
 def get_files(input_glob):
     return np.array(glob(input_glob, recursive=True))
 
-def load_points(files, p_min, p_max):
+def load_points(files, p_min, p_max, batch_size=32):
     files_len = len(files)
 
     with multiprocessing.Pool() as p:
         logger.info('Loading PCs into memory (parallel reading)')
-        pcs = np.array(list(tqdm(p.imap(functools.partial(load_pc, p_min=p_min, p_max=p_max), files, 32), total=files_len)))
+        pcs = np.array(list(tqdm(p.imap(functools.partial(load_pc, p_min=p_min, p_max=p_max), files, batch_size), total=files_len)))
         points = np.array(list(tqdm((pc.points for pc in pcs), total=files_len)))
 
     return points
