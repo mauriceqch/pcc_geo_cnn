@@ -58,8 +58,11 @@ def load_pc(path, p_min, p_max):
 
 def write_pc(path, pc):
     df = pc_to_df(pc)
-    pc2 = PyntCloud(df)
-    pc2.to_file(path)
+    write_df(path, df)
+
+def write_df(path, df):
+    pc = PyntCloud(df)
+    pc.to_file(path)
 
 def get_shape_data(resolution):
     bbox_min = 0

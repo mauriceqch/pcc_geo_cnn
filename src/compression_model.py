@@ -85,10 +85,34 @@ def synthesis_transform(tensor, num_filters, data_format):
     return tensor
 
 def model_fn(features, labels, mode, params):
+    if params.get('decompress') is None:
+        params['decompress'] = False
     params = namedtuple('Struct', params.keys())(*params.values())
     # Unused
     del labels
     training = (mode == tf.estimator.ModeKeys.TRAIN)
+
+    if params.decompress:
+        assert mode == tf.estimator.ModeKeys.PREDICT, 'Decompression must use prediction mode'
+        y_shape = params.y_shape
+        y_shape = [params.num_filters] + [int(s) for s in y_shape]
+        x_shape = params.x_shape
+
+        entropy_bottleneck = tfc.EntropyBottleneck(data_format=params.data_format, dtype=tf.float32)
+        y_hat = entropy_bottleneck.decompress(features, y_shape, channels=params.num_filters)
+        x_hat = synthesis_transform(y_hat, params.num_filters, params.data_format)
+
+        # Remove batch dimension, and crop away any extraneous padding on the bottom
+        # or right boundaries.
+        x_hat = x_hat[0, :, :x_shape[0], :x_shape[1], :x_shape[2]]
+        x_hat_quant = quantize_tensor(x_hat)
+
+        predictions = {
+            'x_hat': x_hat,
+            'x_hat_quant': x_hat_quant
+        }
+        return tf.estimator.EstimatorSpec(mode, predictions=predictions)
+
 
     # Get training patch from dataset.
     x = features
@@ -112,15 +136,17 @@ def model_fn(features, labels, mode, params):
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         string = entropy_bottleneck.compress(y)
-        # Remove batch dimension and repeat across batch dimensions
+
+        # Remove batch and channels dimensions 
+        # Repeat batch_size times
         x_shape = tf.shape(x)
         y_shape = tf.shape(y)
         batch_size = x_shape[0]
-
         def repeat(t, n):
             return tf.reshape(tf.tile(t, [n]), tf.concat([[n], tf.shape(t)], 0))
-        x_shape_rep = repeat(x_shape[1:], batch_size)
-        y_shape_rep = repeat(y_shape[1:], batch_size)
+        x_shape_rep = repeat(x_shape[2:], batch_size)
+        y_shape_rep = repeat(y_shape[2:], batch_size)
+
         predictions = {
             'x_tilde': x_tilde,
             'y_tilde': y_tilde,
