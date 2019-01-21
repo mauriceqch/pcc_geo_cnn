@@ -28,14 +28,13 @@ def input_fn(features, batch_size, dense_tensor_shape, preprocess_threads, repea
     with tf.device('/cpu:0'):
         zero = tf.constant(0)
         dataset = tf.data.Dataset.from_generator(lambda: iter(features), tf.int64, tf.TensorShape([None, 3]))
-        dataset = dataset.map(lambda x: pc_to_tf(x, dense_tensor_shape))
-        dataset = dataset.map(lambda x: process_x(x, dense_tensor_shape), num_parallel_calls=preprocess_threads)
-        dataset = dataset.map(lambda t: (t, zero))
         if repeat:
             dataset = dataset.shuffle(buffer_size=len(features))
             dataset = dataset.repeat()
+        dataset = dataset.map(lambda x: pc_to_tf(x, dense_tensor_shape), num_parallel_calls=preprocess_threads)
+        dataset = dataset.map(lambda x: (process_x(x, dense_tensor_shape), zero), num_parallel_calls=preprocess_threads)
         dataset = dataset.batch(batch_size)
-        dataset = dataset.prefetch(batch_size * 2)
+        dataset = dataset.prefetch(1)
 
     return dataset.make_one_shot_iterator().get_next()
 

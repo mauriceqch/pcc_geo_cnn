@@ -115,9 +115,6 @@ if __name__ == '__main__':
         '--max_steps', type=int, default=1000000,
         help='Train up to this number of steps.')
     parser.add_argument(
-        '--epochs', type=int, default=1000,
-        help='Train up to this number of epochs.')
-    parser.add_argument(
         '--preprocess_threads', type=int, default=16,
         help='Number of CPU threads to use for parallel decoding.')
     parser.add_argument(
