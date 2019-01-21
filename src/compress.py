@@ -15,6 +15,7 @@ import tensorflow as tf
 import argparse
 import compression_model
 import pc_io
+import gzip
 from tqdm import tqdm
 
 np.random.seed(42)
@@ -108,7 +109,7 @@ if __name__ == '__main__':
         logger.info(f'Writing {ori_file} to {output_file}')
         output_dir, _ = os.path.split(output_file)
         os.makedirs(output_dir, exist_ok=True)
-        with open(output_file, "wb") as f:
+        with gzip.open(output_file, "wb") as f:
             representation = compress(ret)
             f.write(representation)
 

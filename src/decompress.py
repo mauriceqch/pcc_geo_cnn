@@ -16,6 +16,7 @@ import argparse
 import compression_model
 import pc_io
 import multiprocessing
+import gzip
 from tqdm import tqdm
 
 np.random.seed(42)
@@ -32,7 +33,7 @@ TYPE = np.uint16
 DTYPE = np.dtype(TYPE)
 SHAPE_LEN = 3
 def load_compressed_file(file):
-    with open(file, "rb") as f:
+    with gzip.open(file, "rb") as f:
         x_shape = np.frombuffer(f.read(DTYPE.itemsize * SHAPE_LEN), dtype=TYPE)
         y_shape = np.frombuffer(f.read(DTYPE.itemsize * SHAPE_LEN), dtype=TYPE)
         string = f.read()
