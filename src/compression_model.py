@@ -23,7 +23,7 @@ def quantize_tensor(x):
     x = tf.cast(x, tf.uint8)
     return x
 
-def input_fn(features, batch_size, dense_tensor_shape, preprocess_threads, repeat=True):
+def input_fn(features, batch_size, dense_tensor_shape, preprocess_threads, repeat=True, prefetch_size=1):
     # Create input data pipeline.
     with tf.device('/cpu:0'):
         zero = tf.constant(0)
@@ -34,7 +34,7 @@ def input_fn(features, batch_size, dense_tensor_shape, preprocess_threads, repea
         dataset = dataset.map(lambda x: pc_to_tf(x, dense_tensor_shape), num_parallel_calls=preprocess_threads)
         dataset = dataset.map(lambda x: (process_x(x, dense_tensor_shape), zero), num_parallel_calls=preprocess_threads)
         dataset = dataset.batch(batch_size)
-        dataset = dataset.prefetch(1)
+        dataset = dataset.prefetch(prefetch_size)
 
     return dataset.make_one_shot_iterator().get_next()
 

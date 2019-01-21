@@ -64,11 +64,11 @@ def train():
         hooks = [tf_debug.TensorBoardDebugHook(args.debug_address)]
 
     train_spec = tf.estimator.TrainSpec(
-        input_fn=lambda: compression_model.input_fn(points_train, args.batch_size, dense_tensor_shape, args.preprocess_threads),
+        input_fn=lambda: compression_model.input_fn(points_train, args.batch_size, dense_tensor_shape, args.preprocess_threads, prefetch_size=args.prefetch_size),
         max_steps=args.max_steps,
         hooks=hooks)
     val_spec = tf.estimator.EvalSpec(
-        input_fn=lambda: compression_model.input_fn(points_test, args.batch_size, dense_tensor_shape, args.preprocess_threads, repeat=False),
+        input_fn=lambda: compression_model.input_fn(points_test, args.batch_size, dense_tensor_shape, args.preprocess_threads, repeat=False, prefetch_size=args.prefetch_size),
         steps=None,
         hooks=hooks)
 
@@ -102,6 +102,9 @@ if __name__ == '__main__':
     parser.add_argument(
         '--batch_size', type=int, default=64,
         help='Batch size for training.')
+    parser.add_argument(
+        '--prefetch_size', type=int, default=128,
+        help='Number of batches to prefetch for training.')
     parser.add_argument(
         '--lmbda', type=float, default=0.0001,
         help='Lambda for rate-distortion tradeoff.')
