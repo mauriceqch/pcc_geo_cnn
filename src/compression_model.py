@@ -86,6 +86,8 @@ def synthesis_transform(tensor, num_filters, data_format):
 def model_fn(features, labels, mode, params):
     if params.get('decompress') is None:
         params['decompress'] = False
+    if params.get('additional_metrics') is None:
+        params['additional_metrics'] = False
     params = namedtuple('Struct', params.keys())(*params.values())
     # Unused
     del labels
@@ -130,7 +132,6 @@ def model_fn(features, labels, mode, params):
 
     # Total number of bits divided by number of pixels.
     log_likelihoods = tf.log(likelihoods)
-    train_bpv = tf.reduce_sum(log_likelihoods) / (-np.log(2) * num_voxels)
     train_mbpov = tf.reduce_sum(log_likelihoods) / (-np.log(2) * num_occupied_voxels)
 
     if mode == tf.estimator.ModeKeys.PREDICT:
@@ -160,44 +161,48 @@ def model_fn(features, labels, mode, params):
     # The rate-distortion cost.
     train_loss = params.lmbda * train_fl + train_mbpov
 
-    # Metrics
-    train_mae = tf.reduce_mean(tf.abs(x - x_tilde))
-    train_mse = tf.reduce_mean(tf.squared_difference(x, x_tilde))
-    tp = tf.count_nonzero(x_tilde_quant * x_quant, dtype=tf.float32) / num_voxels
-    tn = tf.count_nonzero((x_tilde_quant - 1) * (x_quant - 1), dtype=tf.float32) / num_voxels
-    fp = tf.count_nonzero(x_tilde_quant * (x_quant - 1), dtype=tf.float32) / num_voxels
-    fn = tf.count_nonzero((x_tilde_quant - 1) * x_quant, dtype=tf.float32) / num_voxels
-    precision = tp / (tp + fp)
-    recall = tp / (tp + fn)
-    accuracy = (tp + tn) / (tp + tn + fp + fn)
-    specificity = tn / (tn + fp)
-    f1_score = (2 * precision * recall) / (precision + recall)
-
+    # Main metrics
     tf.summary.scalar("loss", train_loss)
-    tf.summary.scalar("bpv", train_bpv)
     tf.summary.scalar("mbpov", train_mbpov)
-    tf.summary.scalar("mse", train_mse)
     tf.summary.scalar("focal_loss", train_fl)
-    tf.summary.scalar("mae", train_mae)
     tf.summary.scalar("num_occupied_voxels", num_occupied_voxels)
     tf.summary.scalar("num_voxels", num_voxels)
-    tf.summary.scalar("precision_metric", precision)
-    tf.summary.scalar("recall_metric", recall)
-    tf.summary.scalar("accuracy_metric", accuracy)
-    tf.summary.scalar("specificity_metric", specificity)
-    tf.summary.scalar("f1_score_metric", f1_score)
 
-    tf.summary.histogram("y", y)
-    tf.summary.histogram("y_tilde", y_tilde)
-    tf.summary.histogram("x", x)
-    tf.summary.histogram("x_tilde", x_tilde)
-    tf.summary.histogram("x_tilde_quant", x_tilde_quant)
-    tf.summary.histogram("likelihoods", likelihoods)
-    tf.summary.histogram("log_likelihoods", log_likelihoods)
+    # Additional metrics
+    if params.additional_metrics:
+        train_mae = tf.reduce_mean(tf.abs(x - x_tilde))
+        train_mse = tf.reduce_mean(tf.squared_difference(x, x_tilde))
+        train_bpv = tf.reduce_sum(log_likelihoods) / (-np.log(2) * num_voxels)
+        tp = tf.count_nonzero(x_tilde_quant * x_quant, dtype=tf.float32) / num_voxels
+        tn = tf.count_nonzero((x_tilde_quant - 1) * (x_quant - 1), dtype=tf.float32) / num_voxels
+        fp = tf.count_nonzero(x_tilde_quant * (x_quant - 1), dtype=tf.float32) / num_voxels
+        fn = tf.count_nonzero((x_tilde_quant - 1) * x_quant, dtype=tf.float32) / num_voxels
+        precision = tp / (tp + fp)
+        recall = tp / (tp + fn)
+        accuracy = (tp + tn) / (tp + tn + fp + fn)
+        specificity = tn / (tn + fp)
+        f1_score = (2 * precision * recall) / (precision + recall)
 
-    # Creates summary for the probability mass function (PMF) estimated in the
-    # bottleneck.
-    entropy_bottleneck.visualize()
+        tf.summary.scalar("mae", train_mae)
+        tf.summary.scalar("mse", train_mse)
+        tf.summary.scalar("bpv", train_bpv)
+        tf.summary.scalar("precision_metric", precision)
+        tf.summary.scalar("recall_metric", recall)
+        tf.summary.scalar("accuracy_metric", accuracy)
+        tf.summary.scalar("specificity_metric", specificity)
+        tf.summary.scalar("f1_score_metric", f1_score)
+
+        tf.summary.histogram("y", y)
+        tf.summary.histogram("y_tilde", y_tilde)
+        tf.summary.histogram("x", x)
+        tf.summary.histogram("x_tilde", x_tilde)
+        tf.summary.histogram("x_tilde_quant", x_tilde_quant)
+        tf.summary.histogram("likelihoods", likelihoods)
+        tf.summary.histogram("log_likelihoods", log_likelihoods)
+
+        # Creates summary for the probability mass function (PMF) estimated in the
+        # bottleneck.
+        entropy_bottleneck.visualize()
 
     if mode == tf.estimator.ModeKeys.EVAL:
         summary_hook = tf.train.SummarySaverHook(

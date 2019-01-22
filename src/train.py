@@ -43,8 +43,10 @@ def train():
 
     config = tf.estimator.RunConfig(
         keep_checkpoint_every_n_hours=1,
-        save_checkpoints_secs=600,
-        keep_checkpoint_max=100,
+        save_checkpoints_secs=args.save_checkpoints_secs,
+        keep_checkpoint_max=args.keep_checkpoint_max,
+        log_step_count_steps=args.log_step_count_steps,
+        save_summary_steps=args.save_summary_steps,
         tf_random_seed=42)
     estimator = tf.estimator.Estimator(
         model_fn=compression_model.model_fn,
@@ -55,6 +57,7 @@ def train():
             'alpha': args.alpha,
             'gamma': args.gamma,
             'lmbda': args.lmbda,
+            'additional_metrics': args.additional_metrics,
             'checkpoint_dir': args.checkpoint_dir,
             'data_format': DATA_FORMAT
         })
@@ -96,6 +99,21 @@ if __name__ == '__main__':
     parser.add_argument(
         '--verbose', '-v', action='store_true',
         help='Report bitrate and distortion when training.')
+    parser.add_argument(
+        '--additional_metrics', action='store_true',
+        help='Report additional metrics when training.')
+    parser.add_argument(
+        '--save_checkpoints_secs', type=int, default=1800,
+        help='Save checkpoints every n seconds during training.')
+    parser.add_argument(
+        '--keep_checkpoint_max', type=int, default=50,
+        help='Maximum number of checkpoint files to keep.')
+    parser.add_argument(
+        '--log_step_count_steps', type=int, default=100,
+        help='Log global step and loss every n steps.')
+    parser.add_argument(
+        '--save_summary_steps', type=int, default=100,
+        help='Save summaries every n steps.')
     parser.add_argument(
         '--num_filters', type=int, default=32,
         help='Number of filters per layer.')
