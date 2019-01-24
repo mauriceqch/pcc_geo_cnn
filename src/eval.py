@@ -40,6 +40,15 @@ def pc_error(f, df):
 
         return data
 
+def pc_error_packed(d):
+    return pc_error(d[0], d[1])
+
+def get_n_points(f):
+    return len(PyntCloud.from_file(f).points)
+
+def get_file_size_in_bits(f):
+    return os.stat(f).st_size * 8
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         prog='eval.py',
@@ -79,6 +88,11 @@ if __name__ == '__main__':
         type=int,
         help='pc_error knn argument.',
         default=36)
+    parser.add_argument(
+        '--batch_size',
+        type=int,
+        help='Parallelism batch size.',
+        default=1)
     parser.add_argument(
         '--pc_error_data_signal',
         help='pc_error data signal for parsing.',
@@ -123,14 +137,21 @@ if __name__ == '__main__':
     if compressed_dir_supplied:
         for f, cf in zip(files, compressed_files):
             assert os.path.exists(cf), cf + " does not exist"
-            assert f[len(args.ori_dir):] == cf[len(args.compressed_dir):len(df)-len(args.compressed_suffix)]
+            assert f[len(args.ori_dir):] == cf[len(args.compressed_dir):len(cf)-len(args.compressed_suffix)]
 
     headers = []
     results = []
-    logger.info("Computing quality metrics")
-    for f, df in zip(tqdm(files), decompressed_files):
-        data = pc_error(f, df)
 
+    with multiprocessing.Pool() as p:
+        logger.info("Computing quality metrics")
+        data_list = np.array(list(tqdm(p.imap(pc_error_packed, zip(files, decompressed_files), args.batch_size), total=len(files))))
+        logger.info("Getting number of points")
+        n_points_ori = np.array(list(tqdm(p.imap(get_n_points, files, args.batch_size), total=len(files))))
+        if compressed_dir_supplied:
+            logger.info("Getting compressed file sizes in bits")
+            csib = np.array(list(tqdm(p.imap(get_file_size_in_bits, compressed_files, args.batch_size), total=len(files))))
+
+    for data in data_list:
         if len(headers) == 0:
             headers = [x[0] for x in data]
         results_row = [float(x[1]) for x in data]
@@ -141,10 +162,11 @@ if __name__ == '__main__':
 
     df['ori_file'] = files
     df['decompressed_file'] = decompressed_files
-    df['n_points_ori'] = df['ori_file'].map(lambda f: len(PyntCloud.from_file(f).points))
+    df['n_points_ori'] = n_points_ori
     if compressed_dir_supplied:
+        logger.info("Getting compressed file sizes")
         df['compressed_file'] = compressed_files
-        df['compressed_size_in_bits'] = df['compressed_file'].map(lambda cf: os.stat(cf).st_size * 8)
+        df['compressed_size_in_bits'] = csib
         df['bpov'] = df['compressed_size_in_bits'] / df['n_points_ori']
 
     df.to_csv(args.output_file)
