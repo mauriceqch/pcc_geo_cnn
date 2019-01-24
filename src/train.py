@@ -57,7 +57,7 @@ def train():
             'alpha': args.alpha,
             'gamma': args.gamma,
             'lmbda': args.lmbda,
-            'additional_metrics': args.additional_metrics,
+            'additional_metrics': not args.no_additional_metrics,
             'checkpoint_dir': args.checkpoint_dir,
             'data_format': DATA_FORMAT
         })
@@ -100,10 +100,10 @@ if __name__ == '__main__':
         '--verbose', '-v', action='store_true',
         help='Report bitrate and distortion when training.')
     parser.add_argument(
-        '--additional_metrics', action='store_true',
+        '--no_additional_metrics', action='store_false',
         help='Report additional metrics when training.')
     parser.add_argument(
-        '--save_checkpoints_secs', type=int, default=1800,
+        '--save_checkpoints_secs', type=int, default=600,
         help='Save checkpoints every n seconds during training.')
     parser.add_argument(
         '--keep_checkpoint_max', type=int, default=50,

@@ -86,8 +86,6 @@ def synthesis_transform(tensor, num_filters, data_format):
 def model_fn(features, labels, mode, params):
     if params.get('decompress') is None:
         params['decompress'] = False
-    if params.get('additional_metrics') is None:
-        params['additional_metrics'] = False
     params = namedtuple('Struct', params.keys())(*params.values())
     # Unused
     del labels
