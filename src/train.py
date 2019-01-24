@@ -100,7 +100,7 @@ if __name__ == '__main__':
         '--verbose', '-v', action='store_true',
         help='Report bitrate and distortion when training.')
     parser.add_argument(
-        '--no_additional_metrics', action='store_false',
+        '--no_additional_metrics', action='store_true',
         help='Report additional metrics when training.')
     parser.add_argument(
         '--save_checkpoints_secs', type=int, default=600,
