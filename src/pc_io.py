@@ -40,7 +40,7 @@ def pa_to_df(points):
             'x': points[:,0],
             'y': points[:,1],
             'z': points[:,2]
-            })
+            }, dtype=np.float32)
     
     return df
 

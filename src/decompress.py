@@ -140,7 +140,8 @@ if __name__ == '__main__':
         output_dir, _ = os.path.split(output_file)
         os.makedirs(output_dir, exist_ok=True)
 
-        pa = np.argwhere(ret['x_hat_quant']).astype('float32')
+        # Remove the geometry channel
+        pa = np.argwhere(ret['x_hat_quant'][0]).astype('float32')
         pc_io.write_df(output_file, pc_io.pa_to_df(pa))
         i += 1
 

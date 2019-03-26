@@ -95,15 +95,15 @@ def model_fn(features, labels, mode, params):
         assert mode == tf.estimator.ModeKeys.PREDICT, 'Decompression must use prediction mode'
         y_shape = params.y_shape
         y_shape = [params.num_filters] + [int(s) for s in y_shape]
-        x_shape = params.x_shape
+        x_shape = tf.constant(params.x_shape, dtype=tf.int64)
 
         entropy_bottleneck = tfc.EntropyBottleneck(data_format=params.data_format, dtype=tf.float32)
         y_hat = entropy_bottleneck.decompress(features, y_shape, channels=params.num_filters)
         x_hat = synthesis_transform(y_hat, params.num_filters, params.data_format)
 
-        # Remove batch dimension, and crop away any extraneous padding on the bottom
+        # Crop away any extraneous padding on the bottom
         # or right boundaries.
-        x_hat = x_hat[0, :, :x_shape[0], :x_shape[1], :x_shape[2]]
+        x_hat = x_hat[:, :, :x_shape[0], :x_shape[1], :x_shape[2]]
         x_hat_quant = quantize_tensor(x_hat)
 
         predictions = {

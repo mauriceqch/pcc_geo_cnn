@@ -22,6 +22,7 @@ from __future__ import print_function
 # Dependency imports
 
 import numpy as np
+import tensorflow as tf
 
 from tensorflow.python.eager import context
 from tensorflow.python.framework import constant_op
@@ -29,6 +30,7 @@ from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import ops
 from tensorflow.python.framework import tensor_shape
 from tensorflow.python.keras.engine import base_layer
+from tensorflow.python.keras.engine import input_spec
 from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import functional_ops
 from tensorflow.python.ops import init_ops
@@ -151,7 +153,8 @@ class EntropyBottleneck(base_layer.Layer):
 
   def __init__(self, init_scale=10, filters=(3, 3, 3), tail_mass=1e-9,
                optimize_integer_offset=True, likelihood_bound=1e-9,
-               range_coder_precision=16, data_format="channels_last", **kwargs):
+               range_coder_precision=16, data_format="channels_last",
+               aggregation=tf.VariableAggregation.MEAN, **kwargs):
     super(EntropyBottleneck, self).__init__(**kwargs)
     self._init_scale = float(init_scale)
     self._filters = tuple(int(f) for f in filters)
@@ -164,6 +167,7 @@ class EntropyBottleneck(base_layer.Layer):
     self._range_coder_precision = int(range_coder_precision)
     self._data_format = data_format
     self._channel_axis(2)  # trigger ValueError early
+    self.aggregation = aggregation
     self.input_spec = base_layer.InputSpec(min_ndim=2)
 
   @property
@@ -273,21 +277,24 @@ class EntropyBottleneck(base_layer.Layer):
       matrix = self.add_variable(
           "matrix_{}".format(i), dtype=self.dtype,
           shape=(channels, filters[i + 1], filters[i]),
-          initializer=init_ops.Constant(init))
+          initializer=init_ops.Constant(init),
+          aggregation=self.aggregation)
       matrix = nn.softplus(matrix)
       self._matrices.append(matrix)
 
       bias = self.add_variable(
           "bias_{}".format(i), dtype=self.dtype,
           shape=(channels, filters[i + 1], 1),
-          initializer=init_ops.RandomUniform(-.5, .5))
+          initializer=init_ops.RandomUniform(-.5, .5),
+          aggregation=self.aggregation)
       self._biases.append(bias)
 
       if i < len(self.filters):
         factor = self.add_variable(
             "factor_{}".format(i), dtype=self.dtype,
             shape=(channels, filters[i + 1], 1),
-            initializer=init_ops.Zeros())
+            initializer=init_ops.Zeros(),
+            aggregation=self.aggregation)
         factor = math_ops.tanh(factor)
         self._factors.append(factor)
 
@@ -315,7 +322,8 @@ class EntropyBottleneck(base_layer.Layer):
 
     quantiles = self.add_variable(
         "quantiles", shape=(channels, 1, 3), dtype=self.dtype,
-        initializer=quantiles_initializer)
+        initializer=quantiles_initializer,
+        aggregation=self.aggregation)
     logits = self._logits_cumulative(quantiles, stop_gradient=True)
     loss = math_ops.reduce_sum(abs(logits - target))
     self.add_loss(loss, inputs=None)
@@ -369,7 +377,7 @@ class EntropyBottleneck(base_layer.Layer):
 
     self._quantized_cdf = self.add_variable(
         "quantized_cdf", shape=None, initializer=cdf_init, dtype=dtypes.int32,
-        trainable=False)
+        trainable=False, aggregation=tf.VariableAggregation.ONLY_FIRST_REPLICA)
 
     update_op = state_ops.assign(
         self._quantized_cdf, cdf, validate_shape=False)
@@ -468,14 +476,14 @@ class EntropyBottleneck(base_layer.Layer):
       inputs = ops.convert_to_tensor(inputs)
       if not self.built:
         # Check input assumptions set before layer building, e.g. input rank.
-        self._assert_input_compatibility(inputs)
+        input_spec.assert_input_compatibility(self.input_spec, inputs, self.name)
         if self.dtype is None:
           self._dtype = inputs.dtype.base_dtype.name
         self.build(inputs.shape)
 
       # Check input assumptions set after layer building, e.g. input shape.
       if not context.executing_eagerly():
-        self._assert_input_compatibility(inputs)
+        input_spec.assert_input_compatibility(self.input_spec, inputs, self.name)
 
       ndim = self.input_spec.ndim
       channel_axis = self._channel_axis(ndim)
