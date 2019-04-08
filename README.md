@@ -1,6 +1,14 @@
-# Code source for "Learning Convolutional Transforms for Point Cloud Geometry Compression"
+# Learning Convolutional Transforms for Point Cloud Geometry Compression
 
-Uses Tensorflow v1.13.1
+## Overview
+
+We present a novel data-driven geometry compression method for static point clouds based on learned convolutional transforms and uniform quantization.
+
+[[Paper]](https://arxiv.org/abs/1903.08548)
+
+## Versions
+
+Python 3.6.7 and Tensorflow v1.13.1.
 
 ## Datasets
 
@@ -106,3 +114,15 @@ It can also be used to replace compressed colors by ground truth colors for a po
 Example:
 
     python map_color.py ../data/msft/phil9/ply/frame0000.ply ./phil9_frame0000_6.ply ./phil9_frame0000_6_color.ply
+
+## Citation
+
+	@misc{quach2019learning,
+	    title={Learning Convolutional Transforms for Lossy Point Cloud Geometry Compression},
+	    author={Maurice Quach and Giuseppe Valenzise and Frederic Dufaux},
+	    year={2019},
+	    eprint={1903.08548},
+	    archivePrefix={arXiv},
+	    primaryClass={cs.CV}
+	}
+
