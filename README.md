@@ -1,5 +1,7 @@
 # Code source for "Learning Convolutional Transforms for Point Cloud Geometry Compression"
 
+Uses Tensorflow v1.13.1
+
 ## Datasets
 
 You need two datasets to reproduce our results:
