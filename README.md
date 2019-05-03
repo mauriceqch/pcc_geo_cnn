@@ -1,7 +1,7 @@
 # Learning Convolutional Transforms for Point Cloud Geometry Compression
 
 <p align="center">
-  <img src="figs/comparison_samples.png?raw=true" alt="Sublime's custom image" width="70%"/>
+  <img src="figs/comparison_samples.png?raw=true" alt="Sublime's custom image"/>
 </p>
 
 ## Overview
