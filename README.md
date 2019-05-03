@@ -18,8 +18,8 @@ Python 3.6.7 and Tensorflow v1.13.1.
 
 You need two datasets to reproduce our results:
 
-* ModelNet10 manually aligned dataset: http://modelnet.cs.princeton.edu
-* Microsoft Voxelized Upper Bodies dataset (MVUB): https://jpeg.org/plenodb/pc/microsoft/
+* ModelNet10 manually aligned dataset: [http://modelnet.cs.princeton.edu](http://modelnet.cs.princeton.edu)
+* Microsoft Voxelized Upper Bodies dataset (MVUB): [https://jpeg.org/plenodb/pc/microsoft](https://jpeg.org/plenodb/pc/microsoft)
 
 In our paper, we use resolutions of 512 x 512 x 512 for the MVUB dataset.
 
@@ -64,7 +64,7 @@ Example:
 ## Evaluation
 
 The evaluation part depends on `geo_dist` which performs geometric distortion computation for point clouds.
-This software can be retrieved at https://github.com/mauriceqch/geo_dist.
+This software can be retrieved at [https://github.com/mauriceqch/geo_dist](https://github.com/mauriceqch/geo_dist).
 The evaluation script `eval.py` compares the original dataset, the compressed dataset and the decompressed dataset to compute distortion metrics and bitrates.
 The script can also run without the decompressed dataset which means that bitrates won't be computed.
 
@@ -78,7 +78,7 @@ Example with only original and decompressed datasets:
 
 ## Fusing MPEG results
 
-A modified version of the MPEG anchor code can be retrieved at https://github.com/mauriceqch/cwi-pcl-codec.
+A modified version of the MPEG anchor code can be retrieved at [https://github.com/mauriceqch/cwi-pcl-codec](https://github.com/mauriceqch/cwi-pcl-codec).
 It features directory structure preservation and adds byte count information to output CSVs.
 This allows us to compute the bitrate using our pipeline.
 To combine the CSVs produced by the anchor and the CSVs produced by `eval.py`, we provide a `fuse_eval_mpeg.py` script.
