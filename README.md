@@ -18,6 +18,13 @@ An analysis of this data is also available [here](src/report.ipynb).
 
 [[Paper]](https://arxiv.org/abs/1903.08548) [[Website]](https://mauriceqch.github.io/pcc_geo_cnn/) [[Source code]](https://github.com/mauriceqch/pcc_geo_cnn)
 
+Authors:
+[Maurice Quach](https://scholar.google.com/citations?user=atvnc2MAAAAJ),
+[Giuseppe Valenzise](https://scholar.google.com/citations?user=7ftDv4gAAAAJ) and
+[Frederic Dufaux](https://scholar.google.com/citations?user=ziqjbTIAAAAJ)  
+Affiliation: L2S, CNRS, CentraleSupelec  
+Funding: ANR ReVeRy national fund (REVERY ANR-17-CE23-0020)
+
 ## Versions
 
 Python 3.6.7 and Tensorflow v1.13.1.
