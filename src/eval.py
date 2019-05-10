@@ -147,6 +147,7 @@ if __name__ == '__main__':
         data_list = np.array(list(tqdm(p.imap(pc_error_packed, zip(files, decompressed_files), args.batch_size), total=len(files))))
         logger.info("Getting number of points")
         n_points_ori = np.array(list(tqdm(p.imap(get_n_points, files, args.batch_size), total=len(files))))
+        n_points_out = np.array(list(tqdm(p.imap(get_n_points, decompressed_files, args.batch_size), total=len(decompressed_files))))
         if compressed_dir_supplied:
             logger.info("Getting compressed file sizes in bits")
             csib = np.array(list(tqdm(p.imap(get_file_size_in_bits, compressed_files, args.batch_size), total=len(files))))
@@ -163,6 +164,7 @@ if __name__ == '__main__':
     df['ori_file'] = files
     df['decompressed_file'] = decompressed_files
     df['n_points_ori'] = n_points_ori
+    df['n_points_out'] = n_points_out
     if compressed_dir_supplied:
         logger.info("Getting compressed file sizes")
         df['compressed_file'] = compressed_files

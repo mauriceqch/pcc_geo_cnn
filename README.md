@@ -1,7 +1,7 @@
 # Learning Convolutional Transforms for Point Cloud Geometry Compression
 
 <p align="center">
-  <img src="figs/comparison_samples.png?raw=true" alt="Sublime's custom image"/>
+  <img src="figs/comparison_samples.png?raw=true" alt="Comparison samples"/>
 </p>
 
 ## Overview
@@ -101,6 +101,7 @@ The script outputs a CSV file integrating results from both CSVs and computing t
 
 Example:
 
+    ./evaluate_compression -i ~/data/datasets/msft -o ~/data/datasets/cwi-pcl-codec/msft_9 -q 1 -b 9 -g 1 --intra_frame_quality_csv ~/data/datasets/cwi-pcl-codec/msft_9_intra.csv --predictive_quality_csv ~/data/datasets/cwi-pcl-codec/msft9_pred.csv
     python fuse_eval_mpeg.py ../eval/eval_mpeg_9.csv ~/code/cwi-pcl-codec/build/apps/evaluate_compression/msft_9_intra.csv ../eval/eval_mpeg_9_fused.csv
 
 ## Merging evaluation results
@@ -133,6 +134,42 @@ It can also be used to replace compressed colors by ground truth colors for a po
 Example:
 
     python map_color.py ../data/msft/phil9/ply/frame0000.ply ./phil9_frame0000_6.ply ./phil9_frame0000_6_color.ply
+
+## Samples and thumbnails
+
+We select a subset of the dataset and provide the point clouds produced by our method and the MPEG anchor.
+In addition, we also provide thumbnails for easier visualization.
+
+Get samples with color:
+
+    rsync -a --prune-empty-dirs --include '*/' --include 'frame0000.*' --exclude '*' pcc_geo_cnn/ pcc_geo_cnn_samples/
+    rsync -a --prune-empty-dirs --include '*/' --include 'frame0000.*' --exclude '*' msft/ pcc_geo_cnn_samples/msft_samples/
+    cd pcc_geo_cnn_samples/
+    for i in **/*.ply.bin.ply; do j=${i#*/}; python ~/code/pcc_geo_cnn/src/map_color.py msft/${j%.bin.ply} $i $i; done
+
+Create thumbnails:
+
+    # Generate camera parameters
+    for i in msft/**/*.ply; do echo $i; python ~/code/pcc_geo_cnn/src/pc_to_camera_params.py $i ${i}.json; done
+    # Generate thumbnails
+    for i in msft/**/*.ply; do echo $i; python ~/code/pcc_geo_cnn/src/pc_to_img.py $i ${i}.png ${i}.json --point_size 3; done
+    for i in cwi-pcl-codec-samples/msft_5/**/*.ply; do echo $i; python ~/code/pcc_geo_cnn/src/pc_to_img.py $i ${i}.png msft/${i#*/*/}.json --point_size 33; done
+    for i in cwi-pcl-codec-samples/msft_6/**/*.ply; do echo $i; python ~/code/pcc_geo_cnn/src/pc_to_img.py $i ${i}.png msft/${i#*/*/}.json --point_size 17; done
+    for i in cwi-pcl-codec-samples/msft_7/**/*.ply; do echo $i; python ~/code/pcc_geo_cnn/src/pc_to_img.py $i ${i}.png msft/${i#*/*/}.json --point_size 9; done
+    for i in cwi-pcl-codec-samples/msft_8/**/*.ply; do echo $i; python ~/code/pcc_geo_cnn/src/pc_to_img.py $i ${i}.png msft/${i#*/*/}.json --point_size 5; done
+    for i in cwi-pcl-codec-samples/msft_9/**/*.ply; do echo $i; python ~/code/pcc_geo_cnn/src/pc_to_img.py $i ${i}.png msft/${i#*/*/}.json --point_size 3; done
+    for i in msft_dec_*/**/*.ply.bin.ply; do j=${i%.bin.ply}; echo $i; python ~/code/pcc_geo_cnn/src/pc_to_img.py $i ${i}.png msft/${j#*/}.json --point_size 3; done
+    # With ImageMagick, crop the whitespace on the images' sides
+    for i in **/*.png; do convert $i -shave 500x0 $i; done
+
+Produce evaluation results:
+
+    for i in 0001 00005 00001 000005 000001; do python ~/code/pcc_geo_cnn/src/eval.py ./msft "**/*.ply" ./msft_dec_${i} ~/code/geo_dist/build/pc_error --decompressed_suffix .bin.ply --compressed_dir ./msft_bin_${i} --compressed_suffix .bin --output_file ./eval_64_${i}.csv; done
+    for i in 5 6 7 8 9; do python ~/code/pcc_geo_cnn/src/eval.py ./msft "**/*.ply" ./cwi-pcl-codec-samples/msft_${i} ~/code/geo_dist/build/pc_error --output_file ./eval_mpeg_${i}.csv; done
+    for i in 5 6 7 8 9; do python ~/code/pcc_geo_cnn/src/fuse_eval_mpeg.py ./eval_mpeg_${i}.csv ../cwi-pcl-codec/msft_${i}_intra.csv ./eval_mpeg_${i}_fused.csv; done
+    python ~/code/pcc_geo_cnn/src/merge_csv.py ./eval_64_fused.csv -i ./eval_64_00*.csv
+    python ~/code/pcc_geo_cnn/src/merge_csv.py ./eval_mpeg_fused.csv -i ./eval_mpeg_*_fused.csv
+
 
 ## Citation
 
