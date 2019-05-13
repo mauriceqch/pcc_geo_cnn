@@ -16,7 +16,7 @@ Moreover, while octree-based methods face exponential diminution of the number o
 Rate-distortion data is available [here](eval). `eval_64_*` files correspond to our method and `eval_mpeg_*` files correspond to the MPEG anchor.
 An analysis of this data is also available [here](src/report.ipynb).
 
-[[Paper]](https://arxiv.org/abs/1903.08548) [[Website]](https://mauriceqch.github.io/pcc_geo_cnn/) [[Source code]](https://github.com/mauriceqch/pcc_geo_cnn) [[Supplementary Material Website]](https://mauriceqch.github.io/pcc_geo_cnn_samples/) [[Supplementary Material]](https://github.com/mauriceqch/pcc_geo_cnn_samples)
+[[Paper]](https://arxiv.org/abs/1903.08548) [[Source code]](https://github.com/mauriceqch/pcc_geo_cnn) [[Supplementary Material Website]](https://mauriceqch.github.io/pcc_geo_cnn_samples/) [[Supplementary Material]](https://github.com/mauriceqch/pcc_geo_cnn_samples)
 
 Authors:
 [Maurice Quach](https://scholar.google.com/citations?user=atvnc2MAAAAJ),
