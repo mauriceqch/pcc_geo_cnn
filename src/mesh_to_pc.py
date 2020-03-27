@@ -35,6 +35,9 @@ def process(path, args):
 
     logger.debug(f"Writing PC {ori_path} to {target_path}")
     pc_mesh = PyntCloud.from_file(ori_path)
+    mesh = pc_mesh.mesh
+    pc_mesh.points = pc_mesh.points.astype('float64', copy=False)
+    pc_mesh.mesh = mesh
 
     pc = pc_mesh.get_sample("mesh_random", n=args.n_samples, as_PyntCloud=True)
     coords = ['x', 'y', 'z']
@@ -84,5 +87,7 @@ if __name__ == '__main__':
     with Pool() as p:
         process_f = functools.partial(process, args=args)
         list(tqdm(p.imap(process_f, files), total=files_len)) 
+        # Without parallelism
+        #list(tqdm((process_f(f) for f in files), total=files_len))
  
     logger.info(f'{files_len} models written to {args.dest}')
