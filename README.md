@@ -4,7 +4,7 @@
   <img src="figs/comparison_samples.png?raw=true" alt="Comparison samples"/>
 </p>
 
-[[Paper]](https://arxiv.org/abs/1903.08548) [[Source code]](https://github.com/mauriceqch/pcc_geo_cnn) [[Supplementary Material Website]](https://mauriceqch.github.io/pcc_geo_cnn_samples/) [[Supplementary Material]](https://github.com/mauriceqch/pcc_geo_cnn_samples)
+[[Paper]](https://arxiv.org/abs/1903.08548), Supplementary Material: [[Website]](https://mauriceqch.github.io/pcc_geo_cnn_samples/) [[Data]](https://github.com/mauriceqch/pcc_geo_cnn_samples)
 
 Authors:
 [Maurice Quach](https://scholar.google.com/citations?user=atvnc2MAAAAJ),
