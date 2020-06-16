@@ -173,12 +173,20 @@ Produce evaluation results:
 
 ## Citation
 
-	@misc{quach2019learning,
-	    title={Learning Convolutional Transforms for Lossy Point Cloud Geometry Compression},
-	    author={Maurice Quach and Giuseppe Valenzise and Frederic Dufaux},
-	    year={2019},
-	    eprint={1903.08548},
-	    archivePrefix={arXiv},
-	    primaryClass={cs.CV}
+	@inproceedings{DBLP:conf/icip/QuachVD19,
+	  author    = {Maurice Quach and
+		       Giuseppe Valenzise and
+		       Fr{\'{e}}d{\'{e}}ric Dufaux},
+	  title     = {Learning Convolutional Transforms for Lossy Point Cloud Geometry Compression},
+	  booktitle = {2019 {IEEE} International Conference on Image Processing, {ICIP} 2019,
+		       Taipei, Taiwan, September 22-25, 2019},
+	  pages     = {4320--4324},
+	  publisher = {{IEEE}},
+	  year      = {2019},
+	  url       = {https://doi.org/10.1109/ICIP.2019.8803413},
+	  doi       = {10.1109/ICIP.2019.8803413},
+	  timestamp = {Wed, 11 Dec 2019 16:30:23 +0100},
+	  biburl    = {https://dblp.org/rec/conf/icip/QuachVD19.bib},
+	  bibsource = {dblp computer science bibliography, https://dblp.org}
 	}
 
