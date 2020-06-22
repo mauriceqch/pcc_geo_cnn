@@ -1,5 +1,7 @@
 # Learning Convolutional Transforms for Point Cloud Geometry Compression
 
+## Updated version: ["Improved Deep Point Cloud Geometry Compression"](https://github.com/mauriceqch/pcc_geo_cnn_v2)
+
 <p align="center">
   <img src="figs/comparison_samples.png?raw=true" alt="Comparison samples"/>
 </p>
