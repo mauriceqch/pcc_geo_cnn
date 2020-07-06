@@ -104,7 +104,7 @@ The script outputs a CSV file integrating results from both CSVs and computing t
 Example:
 
     ./evaluate_compression -i ~/data/datasets/msft -o ~/data/datasets/cwi-pcl-codec/msft_9 -q 1 -b 9 -g 1 --intra_frame_quality_csv ~/data/datasets/cwi-pcl-codec/msft_9_intra.csv --predictive_quality_csv ~/data/datasets/cwi-pcl-codec/msft9_pred.csv
-    python fuse_eval_mpeg.py ../eval/eval_mpeg_9.csv ~/code/cwi-pcl-codec/build/apps/evaluate_compression/msft_9_intra.csv ../eval/eval_mpeg_9_fused.csv
+    python fuse_eval_mpeg.py ../eval/eval_mpeg_9.csv ~/data/datasets/cwi-pcl-codec/msft_9_intra.csv ../eval/eval_mpeg_9_fused.csv
 
 ## Merging evaluation results
 
